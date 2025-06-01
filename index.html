@@ -1,0 +1,316 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Science & Finance Portfolio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+    nav {
+      background-color: #2c2c2c;
+      padding: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    nav .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav h1 {
+      font-size: 1.8rem;
+      color: #f97316; /* Orange */
+    }
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav a {
+      color: #3b82f6; /* Blue */
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    nav a:hover {
+      color: #f97316; /* Orange on hover */
+    }
+    section {
+      padding: 4rem 1rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    #home {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(to bottom, #1a1a1a, #2c2c2c);
+    }
+    #home h2 {
+      font-size: 3rem;
+      color: #f97316;
+      margin-bottom: 1rem;
+      animation: fadeIn 1s ease-out;
+    }
+    #home p {
+      font-size: 1.2rem;
+      color: #d1d5db;
+      margin-bottom: 2rem;
+    }
+    #home a {
+      background-color: #3b82f6;
+      color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+    #home a:hover {
+      background-color: #f97316;
+    }
+    #projects h2 {
+      font-size: 2.5rem;
+      color: #f97316;
+      margin-bottom: 3rem;
+    }
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    .project-card {
+      background-color: #2c2c2c;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .project-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .project-card:hover {
+      transform: scale(1.05);
+    }
+    .project-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .project-card h3 {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      margin-bottom: 0.5rem;
+    }
+    .project-card p {
+      color: #d1d5db;
+      margin-bottom: 1rem;
+    }
+    .project-card a {
+      color: #f97316;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .project-card a:hover {
+      color: #3b82f6;
+    }
+    #about h2, #contact h2 {
+      font-size: 2.5rem;
+      color: #f97316;
+      margin-bottom: 2rem;
+      animation: fadeIn 1s ease-out;
+    }
+    #about p, #contact p {
+      font-size: 1.2rem;
+      color: #d1d5db;
+      max-width: 800px;
+      margin: 0 auto 2rem;
+    }
+    .contact-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .contact-links a {
+      color: #3b82f6;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .contact-links a:hover {
+      color: #f97316;
+    }
+    footer {
+      background-color: #2c2c2c;
+      padding: 1rem;
+      text-align: center;
+      color: #6b7280;
+    }
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @media (max-width: 768px) {
+      #home h2 {
+        font-size: 2rem;
+      }
+      #projects h2, #about h2, #contact h2 {
+        font-size: 2rem;
+      }
+      nav ul {
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <h1>Data Science & Finance Portfolio</h1>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home">
+    <div class="container">
+      <h2>Welcome to My Portfolio</h2>
+      <p>Explore my finance and data science projects, built with passion and precision.</p>
+      <a href="#projects">View Projects</a>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section id="projects">
+    <div class="container">
+      <h2>My Projects</h2>
+      <div class="project-grid">
+        <!-- Project Card 1 -->
+        <div class="project-card">
+          <img src="https://images.pexels.com/photos/6802049/pexels-photo-6802049.jpeg" alt="Portfolio Optimization">
+          <h3>Portfolio Optimization with ARIMA and MPT</h3>
+          <p>Developed a Python-based tool combining ARIMA forecasting with Modern Portfolio Theory to optimize investment portfolios for risk-adjusted returns.</p>
+          <a href="https://github.com/btedlock/finance-portfolio">View Project</a>
+        </div>
+        <!-- Project Card 2 -->
+        <div class="project-card">
+          <img src="https://images.pexels.com/photos/4386466/pexels-photo-4386466.jpeg" alt="Heart Disease Prediction">
+          <h3>Heart Disease Prediction with Machine Learning</h3>
+          <p>Built a machine learning model using Scikit-learn to predict heart disease risk based on medical attributes like cholesterol and blood pressure.</p>
+          <a href="https://github.com/btedlock/heart-disease">View Project</a>
+        </div>
+        <!-- Project Card 3 -->
+        <div class="project-card">
+          <img src="https://images.pexels.com/photos/1009926/pexels-photo-1009926.jpeg" alt="Bulldozer Price Prediction">
+          <h3>Bulldozer Sale Price Prediction</h3>
+          <p>Created a machine learning model in Python to predict bulldozer sale prices using historical auction data and features like model and usage hours.</p>
+          <a href="https://github.com/btedlock/bulldozer-price">View Project</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about">
+    <div class="container">
+      <h2>About Me</h2>
+      <p>I’m a finance and data science professional with a passion for leveraging data-driven insights to solve complex problems. My expertise spans financial analysis and predictive modeling, using Python to build solutions like portfolio optimization, medical risk prediction, and equipment price forecasting.</p>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact">
+    <div class="container">
+      <h2>Get in Touch</h2>
+      <p>Interested in collaborating or discussing my work? Connect with me on professional platforms.</p>
+      <div class="contact-links">
+        <a href="https://github.com/btedlock">GitHub</a>
+        <a href="https://www.linkedin.com/in/blaketedlock/">LinkedIn</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 Data Science & Finance Portfolio. All rights reserved.</p>
+  </footer>
+
+  <!-- JavaScript for Scroll Animations -->
+  <script>
+    // Scroll reveal animation
+    const cards = document.querySelectorAll('.project-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    cards.forEach(card => observer.observe(card));
+  </script>
+</body>
+</html>
